@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>速読解トレーニング</title>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/tiny-segmenter@0.2.0/tinysegmenter.js"></script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="topbar" id="topbar" style="display:none">
+  <div class="topbar-logo" onclick="goHome()" style="cursor:pointer" title="ホームへ戻る">📚 速読解トレーニング <span>Web Edition</span></div>
+  <div class="topbar-user">
+    <button onclick="toggleDark()" id="dark-btn" title="ダークモード切替" style="font-size:1rem;padding:4px 10px">🌙</button>
+    <span id="tb-user"></span>
+    <button onclick="doLogout()">ログアウト</button>
+  </div>
+</div>
+
+<!-- AUTH -->
+<div class="view active" id="auth-view">
+  <div class="auth-box">
+    <h1>📚 速読解トレーニング</h1>
+    <p class="auth-sub">速く・正確に・深く読み解く力を鍛えよう</p>
+    <input type="text" id="auth-name" placeholder="ユーザー名（3文字以上）" autocomplete="off">
+    <input type="password" id="auth-pass" placeholder="パスワード">
+    <button class="btn-login" onclick="doLogin()">登録/スタート</button>
+    <div class="auth-err" id="auth-err"></div>
+  </div>
+</div>
+
+<!-- MODE SELECT -->
+<div class="view" id="mode-view">
+  <div class="mode-box">
+    <h2>読み方を選択してください</h2>
+    <p>セッション全体の読書方向を設定します。眼筋運動・ガイド読み・フラッシュ読書がこの設定に合わせて変化します。</p>
+    <div class="mode-cards">
+      <div class="mode-card" id="mc-yoko" onclick="selectMode('yoko')">
+        <div class="mci">↔️</div>
+        <div class="mcn">横読み</div>
+        <div class="mcd">一般的な左→右の横書き読書。普段の読書スタイルに近い形で速読を鍛えます</div>
+      </div>
+      <div class="mode-card" id="mc-tate" onclick="selectMode('tate')">
+        <div class="mci">↕️</div>
+        <div class="mcn">縦読み</div>
+        <div class="mcd">日本語本来の縦書き読書。小説・新聞などの縦書き文章の速読を強化します</div>
+      </div>
+    </div>
+    <button class="mode-start-btn" id="mode-start-btn" onclick="confirmMode()">このモードで開始 →</button>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="view" id="dashboard-view">
+  <div class="dash-main">
+    <div class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <span class="sidebar-header-title">メニュー</span>
+        <button class="sidebar-toggle" id="sidebar-toggle" onclick="toggleSidebar()" title="サイドバーを開閉">‹</button>
+      </div>
+      <button class="sidebar-btn active" id="sb-home" onclick="showTab('home',this)">🏠 ホーム</button>
+      <button class="sidebar-btn" id="sb-training" onclick="showTab('training',this)">🎯 トレーニング</button>
+      <button class="sidebar-btn" id="sb-history" onclick="showTab('history',this)">📊 履歴・成績</button>
+      <div class="sep"></div>
+      <div class="sidebar-label">個別トレーニング</div>
+      <button class="sidebar-btn" onclick="goSingle('measure')">📏 速度計測</button>
+      <button class="sidebar-btn" onclick="goSingle('eye-track')">👁 眼筋運動</button>
+      <button class="sidebar-btn" onclick="goSingle('schulte')">🔢 シュルテテーブル</button>
+      <button class="sidebar-btn" onclick="goSingle('peripheral')">🔵 周辺視野</button>
+      <button class="sidebar-btn" onclick="goSingle('guided')">💡 ガイド読み</button>
+      <button class="sidebar-btn" onclick="goSingle('flash')">⚡ フラッシュ読書</button>
+      <button class="sidebar-btn" onclick="goSingle('word-flash')">🔤 単語フラッシュ</button>
+      <button class="sidebar-btn" onclick="goSingle('span')">🧩 スパン測定</button>
+      <button class="sidebar-btn" onclick="goSingle('expand-circle')">⭕ 視野拡張サークル</button>
+      <button class="sidebar-btn" onclick="goSingle('quiz')">❓ 理解度クイズ</button>
+      <button class="sidebar-btn" onclick="goSingle('image-quiz')">🧠 右脳イメージ変換</button>
+    </div>
+    <div class="dash-content">
+      <div id="tab-home">
+        <h2 id="dash-greet">こんにちは</h2>
+        <div class="stats-row">
+          <div class="stat-card"><div class="sl">レベル</div><div class="sv" id="s-lv">1</div></div>
+          <div class="stat-card"><div class="sl">読書速度</div><div class="sv" id="s-wpm">—<span class="su">文字/分</span></div></div>
+          <div class="stat-card"><div class="sl">実効速度</div><div class="sv" id="s-eff">—<span class="su">文字/分</span></div></div>
+          <div class="stat-card"><div class="sl">セッション数</div><div class="sv" id="s-sess">0</div></div>
+        </div>
+        <h2 style="margin-bottom:14px">今日のメニュー</h2>
+        <div class="menu-grid">
+          <div class="menu-card feat" onclick="goFull()"><div class="mi">🚀</div><div class="mn">フルトレーニング（推奨）</div><div class="md">全工程を通して速読力を底上げ。約20〜25分</div></div>
+          <div class="menu-card" onclick="goSingle('schulte')"><div class="mi">🔢</div><div class="mn">シュルテテーブル</div><div class="md">1〜25を順番にタップ。眼球運動と周辺視野を同時に鍛える</div></div>
+          <div class="menu-card" onclick="goSingle('peripheral')"><div class="mi">🔵</div><div class="mn">周辺視野フラッシュ</div><div class="md">中央を見つめたまま数字を認知する脳トレ型</div></div>
+          <div class="menu-card" onclick="goSingle('eye-track')"><div class="mi">👁</div><div class="mn">眼筋運動</div><div class="md">7種類のパターンで眼筋を多角的に鍛える</div></div>
+          <div class="menu-card" onclick="goSingle('flash')"><div class="mi">⚡</div><div class="mn">フラッシュ読書</div><div class="md">文節→ブロック→ページの3段階RSVP</div></div>
+          <div class="menu-card" onclick="goSingle('word-flash')"><div class="mi">🔤</div><div class="mn">単語フラッシュ</div><div class="md">重要キーワードを高速フラッシュ。意味の定着を促す</div></div>
+          <div class="menu-card" onclick="goSingle('span')"><div class="mi">🧩</div><div class="mn">スパン測定</div><div class="md">一瞬で認識できる文字数（視野スパン）を測定</div></div>
+          <div class="menu-card" onclick="goSingle('guided')"><div class="mi">💡</div><div class="mn">ガイド読み</div><div class="md">ハイライト追従で視野を広げる</div></div>
+          <div class="menu-card" onclick="goSingle('image-quiz')"><div class="mi">🧠</div><div class="mn">右脳イメージ変換</div><div class="md">キーワードから場面を連想。右脳活性化</div></div>
+        </div>
+      </div>
+      <div id="tab-training" style="display:none">
+        <h2>トレーニングメニュー一覧</h2>
+        <div class="menu-grid">
+          <div class="menu-card feat" onclick="goFull()"><div class="mi">🚀</div><div class="mn">フルトレーニング</div><div class="md">全フェーズ通し（約20〜25分）</div></div>
+          <div class="menu-card" onclick="goSingle('measure')"><div class="mi">📏</div><div class="mn">読書速度計測</div><div class="md">現在の速度のみ計測</div></div>
+          <div class="menu-card" onclick="goSingle('eye-track')"><div class="mi">👁</div><div class="mn">眼筋運動</div><div class="md">7パターンの視線移動トレーニング</div></div>
+          <div class="menu-card" onclick="goSingle('schulte')"><div class="mi">🔢</div><div class="mn">シュルテテーブル</div><div class="md">5×5マスで1〜25をタップ</div></div>
+          <div class="menu-card" onclick="goSingle('peripheral')"><div class="mi">🔵</div><div class="mn">周辺視野フラッシュ</div><div class="md">数字フラッシュ→合計回答（8問）</div></div>
+          <div class="menu-card" onclick="goSingle('guided')"><div class="mi">💡</div><div class="mn">ガイド読み</div><div class="md">ハイライト追従読書</div></div>
+          <div class="menu-card" onclick="goSingle('flash')"><div class="mi">⚡</div><div class="mn">フラッシュ読書</div><div class="md">3段階RSVPトレーニング</div></div>
+          <div class="menu-card" onclick="goSingle('word-flash')"><div class="mi">🔤</div><div class="mn">単語フラッシュ</div><div class="md">キーワード高速フラッシュ</div></div>
+          <div class="menu-card" onclick="goSingle('span')"><div class="mi">🧩</div><div class="mn">スパン測定</div><div class="md">瞬間認識文字数の測定</div></div>
+          <div class="menu-card" onclick="goSingle('quiz')"><div class="mi">❓</div><div class="mn">理解度クイズ</div><div class="md">3択で内容理解を確認</div></div>
+          <div class="menu-card" onclick="goSingle('image-quiz')"><div class="mi">🧠</div><div class="mn">右脳イメージ変換</div><div class="md">キーワード→場面連想</div></div>
+        </div>
+      </div>
+      <div id="tab-history" style="display:none">
+        <h2>学習履歴・成績</h2>
+        <p id="hist-empty" style="color:var(--text-muted);display:none">まだ履歴がありません。トレーニングを始めましょう！</p>
+
+        <!-- サマリー統計 -->
+        <div class="hist-stats-row" id="hist-stats" style="display:none">
+          <div class="hist-stat"><div class="hl">最高読書速度</div><div class="hv" id="hs-max">—<span class="hu">文字/分</span></div></div>
+          <div class="hist-stat"><div class="hl">直近の速度</div><div class="hv" id="hs-last">—<span class="hu">文字/分</span></div></div>
+          <div class="hist-stat"><div class="hl">クイズ正解率</div><div class="hv" id="hs-quiz">—<span class="hu">%</span></div></div>
+        </div>
+
+        <!-- 速度推移グラフ -->
+        <div class="hist-chart-wrap" id="hist-chart-wrap" style="display:none">
+          <h3>読書速度の推移 <span>（計測ありのセッションのみ）</span></h3>
+          <canvas id="wpm-chart"></canvas>
+          <div class="chart-legend">
+            <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#1a56db"></div>読書速度（文字/分）</div>
+            <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#10b981"></div>実効速度（文字/分）</div>
+          </div>
+        </div>
+
+        <!-- 履歴テーブル -->
+        <table class="hist-table" id="hist-table-el" style="display:none">
+          <thead><tr><th>日時</th><th>モード</th><th>テキスト</th><th>種別</th><th>速度</th><th>クイズ</th><th>結果</th></tr></thead>
+          <tbody id="hist-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TRAINING -->
+<div class="view" id="training-view">
+  <div class="tr-top">
+    <h3 id="phase-title">—</h3>
+    <div class="tr-meta"><span id="phase-mode-badge"></span></div>
+    <button class="btn-quit" onclick="quitTraining()">中断して戻る</button>
+  </div>
+  <div class="prog-wrap"><div class="prog-fill" id="prog" style="width:0%"></div></div>
+  <div id="tc"></div>
+  <div class="tr-bot"><button id="next-btn" onclick="advancePhase()">次へ →</button></div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
